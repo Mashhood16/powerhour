@@ -20,7 +20,7 @@ export default function Home() {
             <Link href="/search">
               <Button size="lg" className="w-full sm:w-auto font-semibold">Find a Tutor Now</Button>
             </Link>
-            <Link href="/register?role=teacher">
+            <Link href="/signup">
               <Button variant="outline" size="lg" className="w-full sm:w-auto font-semibold">Become a Tutor</Button>
             </Link>
           </div>
@@ -72,7 +72,7 @@ export default function Home() {
             Our built-in e-wallet system ensures your PKR funds are only released when you are satisfied with your completed hour.
           </p>
           <div className="pt-8 flex justify-center">
-            <Link href="/register">
+            <Link href="/signup">
               <Button size="lg" className="px-12 rounded-full">Get Started Today</Button>
             </Link>
           </div>
