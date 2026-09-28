@@ -9,10 +9,10 @@ router.post('/register', register);
 router.post('/verify-otp', verifyOtp);
 router.post('/login', login);
 
-// Protected route example
-router.get('/me', authenticate, (req, res) => {
-  res.json({ message: 'User profile data', user: req.user });
-});
+import { getDashboardData } from '../controllers/dashboard';
+
+// Protected route
+router.get('/dashboard', authenticate, getDashboardData);
 
 // Admin only route example
 router.get('/admin', authenticate, authorizeRole(['ADMIN']), (req, res) => {
