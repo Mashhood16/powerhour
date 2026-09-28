@@ -59,3 +59,35 @@ export const getDashboardData = async (req: Request, res: Response): Promise<voi
     res.status(500).json({ message: 'Failed to load dashboard data' });
   }
 };
+
+export const topUpWallet = async (req: Request, res: Response): Promise<void> => {
+  // @ts-ignore
+  const { userId } = req.user;
+  const { amount } = req.body;
+
+  if (!amount || amount <= 0) {
+    res.status(400).json({ message: 'Invalid top-up amount' });
+    return;
+  }
+
+  try {
+    // 1. Add balance to wallet
+    const result = await query(
+      'UPDATE wallets SET balance = balance + $1 WHERE user_id = $2 RETURNING id, balance',
+      [amount, userId]
+    );
+
+    const walletId = result.rows[0].id;
+
+    // 2. Record transaction
+    await query(
+      `INSERT INTO transactions (wallet_id, type, amount, description) VALUES ($1, 'DEPOSIT', $2, 'Prototype Top-Up')`,
+      [walletId, amount]
+    );
+
+    res.status(200).json({ message: 'Wallet topped up successfully', balance: result.rows[0].balance });
+  } catch (error) {
+    console.error('Top-up error:', error);
+    res.status(500).json({ message: 'Failed to top up wallet' });
+  }
+};

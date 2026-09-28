@@ -9,10 +9,11 @@ router.post('/register', register);
 router.post('/verify-otp', verifyOtp);
 router.post('/login', login);
 
-import { getDashboardData } from '../controllers/dashboard';
+import { getDashboardData, topUpWallet } from '../controllers/dashboard';
 
-// Protected route
+// Protected routes
 router.get('/dashboard', authenticate, getDashboardData);
+router.post('/wallet/topup', authenticate, topUpWallet);
 
 // Admin only route example
 router.get('/admin', authenticate, authorizeRole(['ADMIN']), (req, res) => {

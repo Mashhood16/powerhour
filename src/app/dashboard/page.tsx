@@ -64,9 +64,28 @@ export default function DashboardPage() {
         
         {/* Wallet Card */}
         <div className="bg-white border rounded-xl p-6 shadow-sm flex flex-col justify-between">
-          <div className="flex items-center gap-2 text-muted-foreground mb-4">
-            <Wallet className="h-5 w-5" />
-            <h3 className="font-semibold">Wallet Balance</h3>
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <Wallet className="h-5 w-5" />
+              <h3 className="font-semibold">Wallet Balance</h3>
+            </div>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="text-xs h-7 px-2"
+              onClick={async () => {
+                const token = localStorage.getItem('token');
+                const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://powerhour-pyj1.onrender.com';
+                await fetch(`${apiUrl}/api/auth/wallet/topup`, {
+                  method: 'POST',
+                  headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ amount: 5000 })
+                });
+                window.location.reload(); // Quick refresh to update state
+              }}
+            >
+              + Top Up (5000 PKR)
+            </Button>
           </div>
           <div>
             <div className="text-4xl font-bold text-gray-900">
