@@ -1,0 +1,796 @@
+SOFTWARE REQUIREMENTS SPECIFICATION
+PowerHour
+All the Power, in one Hour
+A time-slot based, on-demand tutoring platform connecting students with teachers for one-to-one, hour-long lessons on web and mobile.
+Project name
+PowerHour
+Document
+Software Requirements Specification (SRS)
+Version
+3.0
+Status
+Draft for review
+Date
+28 September 2026
+Author
+Abdullah Munir Nouroz
+Target release
+Release 1 (online one-to-one lessons)
+Standard followed
+Structure aligned with ISO/IEC/IEEE 29148:2018 and IEEE 830-1998
+Document Control
+Revision history
+Version
+Author
+Version description
+Date completed
+1.0
+Abdullah Munir Nouroz
+Initial draft covering introduction, functional, interface and non-functional requirements.
+—
+3.0
+Abdullah Munir Nouroz
+Refined for developer, QA and UI/UX implementation; removed non-implementation material and consolidated requirements.
+28 Sep 2026
+Review history
+Reviewer
+Version reviewed
+Comments / outcome
+Date
+Approval history
+Approving party
+Version approved
+Signature
+Date
+Table of Contents
+1. Introduction
+1.1 Purpose
+This document specifies the software requirements for PowerHour Release 1. It defines the system behaviour, interfaces, data, business rules and non-functional requirements needed for implementation and verification by developers, QA and UI/UX designers.
+1.2 Product scope
+PowerHour is a time-slot based tutoring platform connecting students with verified teachers for one-to-one, one-hour online lessons. Students select the lesson requirements and an available teacher, complete payment through the platform, attend the lesson in the lesson room, and may rate the teacher afterwards. Teachers publish their expertise and availability and receive payment for completed lessons. The platform commission is 10% of the lesson fee.
+In scope (Release 1):
+Student and teacher registration, verification and account management
+Teacher availability management and hour-slot booking
+Subject, topic and time based teacher matching, with ratings and dynamic hourly rates
+Teacher confirmation workflow, reminders and push notifications
+In-app online lesson room: chat, voice, document sharing, digital whiteboard and screen sharing
+In-app e-wallet, top-up via card and local wallets, and automatic commission deduction
+Post-lesson teacher rating
+Student, teacher and administrator dashboards and analytics
+Out of scope (Release 1):
+Group or collective lessons and cost-splitting packages
+Physical “PowerHour Lecture Rooms”
+Non-academic consultation verticals such as legal or expert advice
+Pre-recorded content or a learning management system (LMS)
+International expansion
+Primary readers.
+Reader
+Use of this document
+Developers
+Implementation source; feature, interface and data requirements.
+QA / testers
+Basis for test plans; every requirement is uniquely identified and verifiable.
+UI/UX designers
+User classes, workflows and interface requirements.
+Product owner / founders
+Scope control, priorities and open decisions.
+1.5 Intended use
+Students register, select lesson requirements and an available teacher, submit a booking request, attend the confirmed lesson in the lesson room, and complete payment through the platform. Teachers manage availability, respond to booking requests and conduct confirmed lessons.
+1.6 Document conventions
+Keywords: “shall” denotes a mandatory requirement, “should” a recommended one, and “may” an optional one.
+Requirement IDs: FR-xxx-nn (functional), EIR-nn (external interface), NFR-xxx-nn (non-functional), BR-nn (business rule).
+Priority (MoSCoW): M = Must have, S = Should have, C = Could have for Release 1.
+Currency: all monetary values are in Pakistani Rupees (PKR) unless stated otherwise.
+1.7 References
+ISO/IEC/IEEE 29148:2018, Systems and software engineering — Life cycle processes — Requirements engineering.
+2. System Overview
+2.1 Product perspective
+PowerHour is a client–server system delivered as Android, iOS and web clients sharing one backend. It uses external services for payment processing, push notifications, OTP delivery and real-time communication.
+Component
+Responsibility
+Client apps (Android, iOS, web)
+Presentation, input validation, lesson room client, local notifications.
+Application backend / API
+Business logic: accounts, availability, booking lifecycle, matching, ratings, wallet ledger, notifications.
+Database
+Persistent storage of users, bookings, messages, ratings and financial transactions.
+Real-time communication service
+Chat, voice, video, screen sharing and whiteboard synchronisation.
+Third-party integrations
+Payment gateway(s), push/SMS/email providers, analytics.
+Admin console
+Operations, verification, configuration and reporting (web only).
+2.2 Product workflow
+Students and teachers register and verify their accounts. Teachers declare expertise and working hours and fund their wallet.
+A student starts a booking, selecting language, subject, topic, level and preferred hour.
+The app lists teachers who match the subject, are available in that hour and are not already booked. Each entry shows name, photo, average rating, lectures taught and hourly rate.
+The student selects a teacher; the app sends a confirmation request to the teacher including subject, topic and time.
+On acceptance, the student is notified and the booking appears in “My Bookings” for both parties; a chat channel opens.
+Both parties receive reminders as the lesson approaches.
+At the scheduled time the lesson takes place in the in-app lesson room.
+On completion, the lesson fee is settled, the 10% commission is deducted from the teacher’s wallet, and the student rates the teacher.
+The rating updates the teacher’s average rating and future hourly rate.
+2.3 User classes and characteristics
+User class
+Description
+Key needs
+Student
+School, college or university learner (may be a minor). Occasional, topic-specific help; price sensitive; typically mobile-first.
+Fast search, transparent price, trusted teachers, simple payment.
+Teacher
+Qualified individual offering tuition in one or more subjects during self-defined hours.
+Predictable schedule, fair rate growth, clear earnings view, reliable payment.
+Administrator
+PowerHour staff with privileged access via the admin console.
+Verification tools, analytics, dispute handling, configuration control.
+2.4 Operating environment
+Android and iOS (current and previous two major versions) and modern evergreen web browsers (Chrome, Edge, Firefox, Safari).
+Internet connectivity is mandatory; Release 1 has no offline lesson capability.
+Backend hosted on a cloud platform in a region with acceptable latency to Pakistan.
+2.5 Design and implementation constraints
+Payments and regulation: holding user balances in an e-wallet may be regulated (for example by the State Bank of Pakistan). The wallet should be implemented through a licensed payment partner unless PowerHour obtains the required licence. See Open Issue OI-05.
+Minors: primary, middle and matric students are likely to be under 18; the design shall accommodate parental consent and enhanced safeguarding (NFR-PRV-03).
+3. Functional Requirements
+3.1 User registration and authentication
+Separate sign-up flows exist for students and teachers.
+ID
+Requirement
+Priority
+FR-AUTH-01
+The system shall allow students and teachers to register using an email address or mobile phone number.
+M
+FR-AUTH-02
+The system shall provide separate sign-up screens for students and teachers.
+M
+FR-AUTH-03
+The system shall verify each account through a one-time password (OTP) or verification link sent to the supplied email or phone before the account becomes active.
+M
+FR-AUTH-04
+Student registration shall require: name, email, contact number, grade/level of study and area.
+M
+FR-AUTH-05
+Teacher registration shall require all student fields plus: qualification, subject(s) of expertise, specific sub-subject(s) (optional) and preferred working hours.
+M
+FR-AUTH-06
+The system shall require teachers to upload supporting documents (for example CNIC and qualification proof); a teacher shall not appear in search results until an administrator approves the profile.
+S
+FR-AUTH-07
+Teachers shall deposit at least the minimum wallet balance (BR-03) before they can be listed or receive bookings.
+M
+FR-AUTH-08
+The system shall support login with credential validation, password reset via OTP/email, and logout.
+M
+FR-AUTH-09
+The system shall lock an account temporarily after repeated failed logins (proposed: 5 attempts).
+S
+FR-AUTH-10
+For students identified as under 18, the system should capture guardian contact details and consent.
+S
+FR-AUTH-11
+The system shall require acceptance of the Terms of Service and Privacy Policy at registration.
+M
+3.2 Profile and account settings
+ID
+Requirement
+Priority
+FR-PROF-01
+The dashboard shall provide an Account Settings menu with: Edit Account Information, Change Profile Picture, Change Password and Deactivate Account.
+M
+FR-PROF-02
+Teacher profiles shall display name, profile picture, qualification, subjects, average rating and total lectures taught.
+M
+FR-PROF-03
+Deactivating an account shall be blocked while the user has upcoming confirmed bookings or a non-zero wallet balance, and shall otherwise retain records required for audit and legal purposes.
+M
+FR-PROF-04
+Changes to a teacher’s qualification or subjects shall be re-verified by an administrator.
+S
+3.3 Teacher availability management
+ID
+Requirement
+Priority
+FR-AVL-01
+Teachers shall specify recurring weekly working hours in one-hour slots at registration and be able to edit them later.
+M
+FR-AVL-02
+Teachers shall be able to block individual dates or slots (for example holidays).
+S
+FR-AVL-03
+A slot shall become unavailable to other students as soon as a booking request is pending or confirmed for it.
+M
+FR-AVL-04
+Availability changes shall not affect already confirmed bookings.
+M
+3.4 Lesson booking
+ID
+Requirement
+Priority
+FR-BOOK-01
+When booking, the student shall provide: language of instruction, subject, specific topic or niche, level (Elementary, College or University), and preferred date and hour.
+M
+FR-BOOK-02
+The student may optionally specify a textbook or a free-text description of what they want to cover.
+S
+FR-BOOK-03
+The system shall present subjects from a curated, administrator-managed list; topic shall be free text with suggestions.
+M
+FR-BOOK-04
+A lesson shall have a fixed duration of one hour in Release 1.
+M
+FR-BOOK-05
+The system shall prevent a student from booking two overlapping lessons.
+M
+FR-BOOK-06
+The system shall check that the student’s wallet balance covers the lesson fee before the request is sent (see FR-PAY-05).
+M
+3.5 Teacher matching and display
+ID
+Requirement
+Priority
+FR-MATCH-01
+On receiving booking details, the system shall list only teachers who (a) specialise in the chosen subject, (b) include the chosen hour in their working hours, (c) have that hour unbooked, (d) meet the minimum wallet balance and (e) are verified and active.
+M
+FR-MATCH-02
+Each result shall show name, profile picture, average rating out of five, number of lectures taught and hourly rate.
+M
+FR-MATCH-03
+The rate shown shall be calculated from the teacher’s average rating and total lectures taught (FR-RATE-03).
+M
+FR-MATCH-04
+Results shall be sortable by rate, rating and lectures taught, with a sensible default order.
+S
+FR-MATCH-05
+Teachers whose declared sub-subject matches the requested topic should be ranked higher.
+S
+FR-MATCH-06
+If no teacher matches, the system shall suggest nearby hours or related subjects.
+C
+3.6 Booking lifecycle and confirmation
+A booking moves through the states defined in Section 7.2.
+ID
+Requirement
+Priority
+FR-LIFE-01
+After the student selects a teacher, the system shall create a booking in state Pending and send the teacher a confirmation request notification showing subject, topic, level and time.
+M
+FR-LIFE-02
+The teacher shall be able to accept or decline. If the teacher does not respond within a configured window (proposed: 2 hours or before the lesson starts, whichever is earlier), the request shall expire and the slot be released.
+M
+FR-LIFE-03
+On acceptance, the system shall notify the student, set the booking to Confirmed, show it in “My Bookings” for both parties and open the chat channel.
+M
+FR-LIFE-04
+On decline or expiry, the system shall notify the student and release any held funds.
+M
+FR-LIFE-05
+Students and teachers shall be able to cancel a confirmed booking subject to the cancellation policy (BR-06); the counterpart shall be notified immediately.
+M
+FR-LIFE-06
+The system shall record lesson start, end and attendance of both parties to detect completion and no-shows.
+M
+FR-LIFE-07
+A lesson shall be marked Completed only when both parties attended for at least a minimum duration (proposed: 80% of the hour) or an administrator resolves a dispute.
+S
+3.7 Chat and online lesson room
+Release 1 offers online lessons only. The pitch deck describes audio/video calling and screen sharing; the previous SRS specified voice. This version makes voice mandatory and video recommended.
+ID
+Requirement
+Priority
+FR-ROOM-01
+After booking confirmation the system shall provide a text chat between the student and teacher, available before, during and after the lesson.
+M
+FR-ROOM-02
+At the scheduled time the lesson room shall provide a real-time voice channel.
+M
+FR-ROOM-03
+The lesson room should provide video calling with the option to switch it off.
+S
+FR-ROOM-04
+The lesson room shall provide document sharing (PDF, images, common office formats up to a configured size).
+M
+FR-ROOM-05
+The lesson room shall provide a shared digital whiteboard synchronised in real time.
+M
+FR-ROOM-06
+The lesson room shall provide screen sharing on supported platforms.
+S
+FR-ROOM-07
+The lesson room shall open only for the two booked participants and only within a configured window around the scheduled time (proposed: 10 minutes before to 15 minutes after end).
+M
+FR-ROOM-08
+The system shall show a countdown and warn both participants before the hour ends; extensions are out of scope for Release 1.
+S
+FR-ROOM-09
+The system shall detect and warn on exchange of phone numbers, emails or external links in chat, to reduce off-platform dealing (see Threat T2 in the SWOT analysis).
+C
+FR-ROOM-10
+Users shall be able to report abusive behaviour from the chat and lesson room.
+M
+3.8 Teacher rating and pricing
+ID
+Requirement
+Priority
+FR-RATE-01
+After each completed lesson the student shall be prompted to rate the teacher from 1 to 5; an optional written comment may be added.
+M
+FR-RATE-02
+Each rating may be submitted once per lesson and only by the student who attended it.
+M
+FR-RATE-03
+A teacher’s hourly rate shall be computed from their average rating and total lectures taught using an administrator-configurable formula (initial formula TBD, OI-01). The rate shall be frozen at the time of booking.
+M
+FR-RATE-04
+A rate change caused by a new rating shall apply only to future bookings.
+M
+FR-RATE-05
+New teachers with no ratings shall start at a base rate configured per level.
+M
+FR-RATE-06
+Administrators shall be able to review and remove fraudulent or abusive ratings, with an audit trail.
+S
+3.9 E-wallet and payments
+ID
+Requirement
+Priority
+FR-PAY-01
+Every student and teacher shall have an in-app e-wallet showing current balance and transaction history.
+M
+FR-PAY-02
+The “Add Cash” option shall allow top-up via credit/debit card, Easypaisa, JazzCash and Raast.
+M
+FR-PAY-03
+Teachers shall maintain at least the minimum wallet balance (BR-03) to remain bookable; if the balance falls below it the teacher shall be hidden from matching and prompted to top up.
+M
+FR-PAY-04
+On completion of a lesson the system shall automatically deduct a 10% commission of the lesson fee from the teacher’s wallet and credit it to the PowerHour company account.
+M
+FR-PAY-05
+When a booking request is sent, the lesson fee shall be reserved (held) in the student’s wallet; on completion it shall be transferred to the teacher, and on decline, expiry or eligible cancellation it shall be released to the student. (Model to be confirmed, OI-02.)
+M
+FR-PAY-06
+All wallet movements shall be recorded as immutable ledger entries with timestamp, type, amount, counterpart and reference.
+M
+FR-PAY-07
+Teachers shall be able to withdraw earnings above the minimum balance to a bank account or mobile wallet, subject to limits and processing time.
+S
+FR-PAY-08
+The system shall process refunds for cancelled or disputed lessons according to BR-06 and BR-07.
+M
+FR-PAY-09
+Payment operations shall be idempotent so retries or duplicate callbacks cannot cause double credit or debit.
+M
+FR-PAY-10
+The system shall issue an electronic receipt for each top-up and lesson payment.
+S
+3.10 Notifications
+ID
+Requirement
+Priority
+FR-NOTF-01
+The system shall send push notifications (and email/SMS as fallback) for: booking request, acceptance, decline/expiry, cancellation, reminders, payment events and low teacher balance.
+M
+FR-NOTF-02
+Reminders shall be sent to both student and teacher ahead of each lesson (proposed: 24 hours, 1 hour and 10 minutes before).
+M
+FR-NOTF-03
+An in-app notification centre shall list recent notifications.
+S
+FR-NOTF-04
+Users shall be able to manage notification preferences, except for critical transactional notices.
+C
+3.11 Dashboards
+ID
+Requirement
+Priority
+FR-DASH-01
+After login each user shall see a dashboard. The student dashboard shall offer: Book a Lecture, My Bookings, Chat Conversations, Account Settings and Log out.
+M
+FR-DASH-02
+The teacher dashboard shall offer equivalent options and additionally display current average rating, current hourly rate and an “Amount earned this month” meter, plus last month’s earnings.
+M
+FR-DASH-03
+Both dashboards shall display the current wallet balance and an Add Cash option.
+M
+FR-DASH-04
+My Bookings shall separate Upcoming, Pending and Past lessons and allow cancellation and rating where applicable.
+M
+3.12 Administration
+The admin console is a web interface accessible only to authenticated administrators.
+ID
+Requirement
+Priority
+FR-ADM-01
+The admin console shall require individual admin accounts with strong authentication (password plus a second factor) rather than a shared admin password.
+M
+FR-ADM-02
+The admin dashboard shall show: total lectures successfully conducted, total active teachers, total active students, and company revenue for the current and previous month.
+M
+FR-ADM-03
+Administrators shall be able to approve, reject, suspend and reinstate teacher and student accounts.
+M
+FR-ADM-04
+Administrators shall be able to configure commission percentage, base rates, rate formula parameters, minimum wallet balance and the subject list.
+M
+FR-ADM-05
+Administrators shall be able to view and resolve reports and disputes, including refunds and manual wallet adjustments with mandatory reason.
+M
+FR-ADM-06
+All administrator actions shall be written to an audit log.
+M
+FR-ADM-07
+Administrators shall be able to export financial and lecture reports (CSV).
+S
+FR-ADM-08
+Role-based access shall distinguish at least Super Admin, Support and Finance roles.
+S
+3.13 Analytics and records
+ID
+Requirement
+Priority
+FR-ANA-01
+The system shall maintain a record of every booking made by each student and every amount earned by each teacher, and display these to the respective user.
+M
+FR-ANA-02
+The system shall retain a complete lecture record for admin use: lectures conducted, active teachers, active students and company earnings.
+M
+FR-ANA-03
+An “active” user shall be defined as one with at least one login or completed lesson in the last 30 days (definition configurable).
+S
+FR-ANA-04
+The system should capture product analytics (search-to-booking conversion, acceptance rate, cancellation rate, retention) without recording lesson content.
+S
+4. External Interface Requirements
+4.1 User interfaces
+ID
+Requirement
+Priority
+EIR-01
+Interfaces shall be consistent across Android, iOS and web, following platform conventions and a shared design system.
+M
+EIR-02
+Core flows (register, book, pay, join lesson) shall be reachable in as few steps as practicable; a booking shall be completable in under 2 minutes by a first-time user.
+S
+EIR-03
+Interfaces shall support English and Urdu (including right-to-left layout), with English as the Release 1 baseline and Urdu at minimum for the student flow.
+S
+EIR-04
+All error messages shall be human-readable and indicate corrective action.
+M
+4.2 Hardware interfaces
+The system has no dedicated hardware. Client devices shall provide microphone (mandatory for lessons), speaker/headset, camera (for video) and internet connectivity.
+The app shall request device permissions (notifications, microphone, camera, storage) only when needed and explain why.
+4.3 Software and third-party interfaces
+4.3.1 Notifications
+ID
+Requirement
+Priority
+EIR-05
+The system shall integrate with a push-notification service (for example FCM for Android/web and APNs for iOS).
+M
+EIR-06
+The system shall integrate with SMS and email providers for OTPs, receipts and fallback notices.
+M
+4.3.2 Payment gateway
+ID
+Requirement
+Priority
+EIR-07
+The system shall integrate with one or more PCI-DSS compliant payment gateways supporting credit/debit cards, Easypaisa, JazzCash and Raast.
+M
+EIR-08
+The system shall never store raw card data; tokenised or hosted payment pages shall be used.
+M
+EIR-09
+Gateway callbacks (webhooks) shall be authenticated, verified and processed idempotently, and reconciled daily against gateway statements.
+M
+4.3.3 Analytics
+ID
+Requirement
+Priority
+EIR-10
+The system shall integrate an analytics and crash-reporting service; personal data sent to such services shall be minimised and anonymised where possible.
+S
+4.3.4 Real-time communication
+ID
+Requirement
+Priority
+EIR-11
+The system shall use a real-time communication provider or WebRTC stack for voice, video, screen sharing and whiteboard synchronisation, using TURN/STUN for NAT traversal.
+M
+4.4 Communication interfaces
+All client–server traffic shall use HTTPS (TLS 1.2 or higher); real-time traffic shall use WSS and DTLS-SRTP.
+The backend shall expose a versioned REST (or equivalent) API consumed by all clients, so that web and mobile share identical business rules.
+5. Non-Functional Requirements
+Numeric targets are proposed starting points to be validated with stakeholders and load testing.
+5.1 Security
+ID
+Requirement
+Priority
+NFR-SEC-01
+All messages between students and teachers shall be encrypted in transit and stored encrypted at rest.
+M
+NFR-SEC-02
+Personal information (name, phone, email, area) shall be encrypted at rest and shown only to parties who need it; a student and teacher shall not see each other’s contact details.
+M
+NFR-SEC-03
+Passwords shall be stored using a salted, adaptive hash (for example bcrypt or Argon2).
+M
+NFR-SEC-04
+The system shall enforce role-based authorisation on every API call and protect against OWASP Top 10 vulnerabilities.
+M
+NFR-SEC-05
+Sessions shall use short-lived tokens with refresh and shall be revocable.
+M
+NFR-SEC-06
+Financial operations shall be transactional and auditable; wallet balances shall never be negative.
+M
+NFR-SEC-07
+The system shall undergo a security review and penetration test before public launch.
+S
+5.2 Privacy and safeguarding
+ID
+Requirement
+Priority
+NFR-PRV-01
+The system shall collect only the personal data necessary for the service and provide a privacy policy describing its use and retention.
+M
+NFR-PRV-02
+Users shall be able to request access to, correction of, and deletion of their personal data, subject to legal retention duties.
+S
+NFR-PRV-03
+Because minors may use the platform, teachers shall be identity-verified, lessons shall be limited to in-app channels and reporting tools shall be prominent; recording of lessons, if introduced, requires explicit consent.
+M
+5.3 Performance
+ID
+Requirement
+Priority
+NFR-PERF-01
+Standard screens shall load within 3 seconds and API responses shall return within 500 ms at the 95th percentile under expected load.
+S
+NFR-PERF-02
+Teacher matching results shall be returned within 2 seconds at the 95th percentile.
+S
+NFR-PERF-03
+Voice latency shall be below 300 ms one-way under normal network conditions, and the room shall adapt to poor bandwidth (voice-first, video optional).
+S
+5.4 Capacity
+ID
+Requirement
+Priority
+NFR-CAP-02
+Initial planning capacity: 50,000 registered users and 1,000 concurrent lessons, to be revised with business projections.
+S
+5.5 Compatibility
+ID
+Requirement
+Priority
+NFR-COMP-01
+The application shall run on Android, iOS and the web (latest two versions of major browsers).
+M
+NFR-COMP-02
+The same account and data shall be usable interchangeably across platforms.
+M
+5.6 Reliability and availability
+ID
+Requirement
+Priority
+NFR-REL-01
+The system shall be available 24/7 with a target monthly uptime of 99.5% (excluding announced maintenance).
+M
+NFR-REL-02
+Data shall be backed up daily with point-in-time recovery; recovery point objective ≤ 24 h and recovery time objective ≤ 4 h.
+S
+NFR-REL-03
+If a participant disconnects during a lesson, they shall be able to rejoin within the lesson window without losing chat, files or whiteboard content.
+S
+NFR-REL-04
+Scheduled notifications and reminders shall be delivered even after a service restart.
+M
+5.7 Scalability
+ID
+Requirement
+Priority
+NFR-SCAL-01
+The backend shall scale horizontally to serve a large and growing user base.
+M
+5.8 Updates and maintainability
+ID
+Requirement
+Priority
+NFR-UPD-01
+The app shall be easily updatable so that changes and bug fixes can be released; server-side changes shall not require client updates where possible.
+M
+NFR-UPD-02
+The API shall be versioned, and the system shall support forced-update prompts for incompatible client versions.
+S
+NFR-UPD-03
+Code shall be modular, version-controlled, covered by automated tests (proposed ≥ 70% coverage of business logic) and deployed via CI/CD.
+S
+NFR-UPD-04
+Commission, rate parameters and business thresholds shall be configuration values, not hard-coded.
+M
+5.9 Usability and accessibility
+ID
+Requirement
+Priority
+NFR-USE-01
+The app shall be easy to use and navigate for users with little technical experience, including students in lower grades.
+M
+NFR-USE-02
+The interface should follow WCAG 2.1 AA guidance (contrast, scalable text, screen-reader labels).
+S
+NFR-USE-03
+Users shall receive clear feedback for every action (loading, success, failure).
+M
+5.10 Legal and compliance
+ID
+Requirement
+Priority
+NFR-LEG-01
+The system shall comply with applicable Pakistani regulation on electronic payments, taxation of platform income and data protection, and with Google Play and Apple App Store policies.
+M
+NFR-LEG-02
+Terms of Service, Privacy Policy, cancellation/refund policy and teacher agreement shall be published and versioned, with user acceptance logged.
+M
+6. Business Rules
+ID
+Rule
+BR-01
+Each lesson lasts one hour and starts on the hour.
+BR-02
+The platform commission is 10% of the lesson fee, deducted from the teacher’s wallet after each completed lesson. The percentage is configurable by administrators.
+BR-03
+A teacher shall hold at least the minimum wallet balance (amount TBD, OI-03) to be listed for bookings; the minimum ensures commission can always be collected.
+BR-04
+Ratings are integers from 1 to 5. Average rating is the arithmetic mean of all ratings received.
+BR-05
+Hourly rate depends on average rating and total lectures taught; the rate at the time of booking is the rate charged.
+BR-06
+Cancellation policy (proposed): free cancellation up to 6 hours before start; later student cancellation forfeits a percentage of the fee to the teacher; teacher cancellation always refunds the student in full and may reduce the teacher’s standing.
+BR-07
+No-shows: if the teacher fails to attend, the student is fully refunded; if the student fails to attend, the teacher is paid the fee less commission. Disputes are resolved by an administrator.
+BR-08
+A time slot can be held by only one booking at a time for a given teacher, and a student cannot hold overlapping slots.
+BR-09
+Only students who completed a lesson with a teacher may rate that teacher.
+7. Data Requirements
+7.1 Principal data entities
+Entity
+Key attributes
+User
+id, role, name, email, phone, password hash, status, area, profile picture, created date, consent records
+StudentProfile
+user id, grade/level, guardian contact (if minor)
+TeacherProfile
+user id, qualification, subjects, sub-subjects, documents, verification status, average rating, lectures taught, current rate
+Availability
+teacher id, weekday/hour slot, blocked dates
+Booking
+id, student id, teacher id, language, subject, topic, level, start time, fee, rate snapshot, state, timestamps
+LessonSession
+booking id, actual start/end, attendance of each party, connection log
+Message / SharedFile
+booking id, sender, encrypted content, timestamp, file reference
+Rating
+booking id, student id, teacher id, score, comment, timestamp
+Wallet
+user id, balance, held amount, currency
+Transaction (ledger)
+id, wallet id, type (top-up, hold, release, payment, commission, refund, withdrawal), amount, reference, status, timestamp
+Notification
+user id, type, payload, channel, delivery status
+Report / Dispute
+reporter, subject, booking id, reason, status, resolution
+AuditLog
+actor, action, target, timestamp, details
+7.2 Booking states
+State
+Meaning
+Next states
+Pending
+Request sent; awaiting teacher response; funds held.
+Confirmed, Declined, Expired, Cancelled
+Confirmed
+Teacher accepted; lesson scheduled.
+In Progress, Cancelled, No-show
+In Progress
+Lesson room active.
+Completed, Disputed
+Completed
+Lesson finished; payment and commission settled; rating enabled.
+Disputed (within a set period)
+Declined / Expired / Cancelled
+Booking ended before lesson; funds released or refunded per policy.
+—
+No-show
+One party did not attend.
+Refunded, Settled, Disputed
+Disputed
+Under administrator review.
+Refunded, Settled
+7.3 Data retention
+Financial and audit records shall be retained for the period required by law (proposed: at least 6 years).
+Chat content and shared files shall be retained for a defined period (proposed: 12 months) to support disputes, then deleted or anonymised.
+8. Requirements Requiring Confirmation
+The pitch deck and the previous SRS left the following points undefined or inconsistent. Each needs a decision before or during development.
+ID
+Issue
+Proposed resolution
+OI-01
+The formula linking average rating and lectures taught to hourly rate is not defined.
+Define base rate per level plus tiered multipliers (for example rating bands and lecture-count bands); make it configurable.
+OI-02
+The deck says the student pays the teacher “using any payment method” after the lesson; the previous SRS implies wallet-based settlement.
+Adopt wallet-based hold-and-release (FR-PAY-05); all payments flow through the platform.
+OI-03
+Minimum teacher wallet balance amount is not specified.
+Set to cover several commissions (for example Rs. 1,000) and make configurable.
+OI-04
+The previous SRS specified voice only; the deck promises audio/video and screen sharing.
+Voice mandatory, video and screen sharing recommended in Release 1.
+OI-05
+Regulatory status of holding customer funds in an e-wallet.
+Seek legal advice; prefer a licensed payment partner for wallet custody.
+OI-06
+Teacher verification depth and safeguarding of minors.
+Identity and qualification checks; guardian consent for under-18 students.
+OI-07
+Cancellation, refund and dispute policies.
+Adopt BR-06 and BR-07 as starting policy and review with legal counsel.
+OI-09
+Whether lessons are recorded.
+Not recorded in Release 1 unless legal and consent frameworks are in place.
+OI-10
+Language list and curriculum coverage (Federal, Punjab boards, Cambridge, university).
+Start with English and Urdu, level-based tagging; curriculum tags added later.
+9. Definitions and Acronyms
+Term
+Definition
+SRS
+Software Requirements Specification.
+PowerHour
+The time-slot based tutoring platform described in this document.
+Student
+A registered user who books lessons.
+Teacher
+A registered, verified user who delivers lessons.
+Administrator
+PowerHour staff user with access to the admin console.
+Lesson / Lecture
+A one-hour, one-to-one session between one student and one teacher.
+Slot
+A one-hour period in a teacher’s availability.
+E-wallet
+In-app account holding a user’s balance in PKR.
+Commission
+Percentage of each lesson fee retained by PowerHour (10%).
+Hold
+Temporary reservation of a student’s funds pending lesson outcome.
+LMS
+Learning Management System (recorded or structured online content).
+OTP
+One-time password used for verification.
+API
+Application Programming Interface.
+RTC / WebRTC
+Real-time communication technology for voice, video and data.
+TLS / HTTPS
+Transport Layer Security; secure web protocol.
+PCI-DSS
+Payment Card Industry Data Security Standard.
+FCM / APNs
+Firebase Cloud Messaging / Apple Push Notification service.
+Easypaisa, JazzCash
+Pakistani mobile-wallet payment services.
+Raast
+Pakistan’s instant payment system operated by the State Bank of Pakistan.
+CNIC
+Computerised National Identity Card (Pakistan).
+PKR / PKT
+Pakistani Rupee / Pakistan Standard Time.
+MoSCoW
+Prioritisation scheme: Must, Should, Could, Won’t.
+WCAG
+Web Content Accessibility Guidelines.
+RPO / RTO
+Recovery Point Objective / Recovery Time Objective.
