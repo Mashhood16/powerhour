@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import http from 'http';
 import authRoutes from './routes/auth';
 import tutorRoutes from './routes/tutor';
+import bookingRoutes from './routes/booking';
 import { initializeRealtime } from './realtime/socket';
 
 dotenv.config();
@@ -17,6 +18,7 @@ app.use(express.json());
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/tutors', tutorRoutes);
+app.use('/api/bookings', bookingRoutes);
 
 // Health check endpoint
 app.get('/health', (req, res) => {

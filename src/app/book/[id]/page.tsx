@@ -10,44 +10,78 @@ export default function BookingPage() {
   const tutorId = params.id as string;
   
   const [tutor, setTutor] = useState<any>(null);
+  const [availabilities, setAvailabilities] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
+  const [selectedSlot, setSelectedSlot] = useState<any>(null);
   const [bookingStatus, setBookingStatus] = useState<'IDLE' | 'CONFIRMING' | 'SUCCESS'>('IDLE');
-
-  // Generate some mock 1-hour slots for the prototype
-  const MOCK_SLOTS = [
-    'Today, 4:00 PM - 5:00 PM',
-    'Today, 6:00 PM - 7:00 PM',
-    'Tomorrow, 2:00 PM - 3:00 PM',
-    'Tomorrow, 7:00 PM - 8:00 PM'
-  ];
+  const [error, setError] = useState('');
 
   useEffect(() => {
-    // Fetch tutor details (For now, we fetch from the search API and filter by ID)
-    const fetchTutor = async () => {
+    const fetchTutorAndSlots = async () => {
       try {
         const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://powerhour-pyj1.onrender.com';
-        const response = await fetch(`${apiUrl}/api/tutors/search`);
-        if (response.ok) {
-          const data = await response.json();
+        
+        // Fetch Tutor Details
+        const tutorRes = await fetch(`${apiUrl}/api/tutors/search`);
+        if (tutorRes.ok) {
+          const data = await tutorRes.json();
           const foundTutor = data.tutors?.find((t: any) => t.user_id === tutorId);
           setTutor(foundTutor);
         }
+
+        // Fetch Real Availability Slots
+        const slotsRes = await fetch(`${apiUrl}/api/tutors/${tutorId}/availability`);
+        if (slotsRes.ok) {
+          const slotsData = await slotsRes.json();
+          setAvailabilities(slotsData.availabilities || []);
+        }
       } catch (error) {
-        console.error('Failed to fetch tutor details', error);
+        console.error('Failed to fetch data', error);
       } finally {
         setLoading(false);
       }
     };
-    fetchTutor();
+    fetchTutorAndSlots();
   }, [tutorId]);
 
-  const handleBook = () => {
+  const handleBook = async () => {
+    if (!selectedSlot) return;
+    
     setBookingStatus('CONFIRMING');
-    // Simulate API booking delay
-    setTimeout(() => {
-      setBookingStatus('SUCCESS');
-    }, 1500);
+    setError('');
+
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('You must be logged in to book a lesson.');
+      }
+
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://powerhour-pyj1.onrender.com';
+      const response = await fetch(`${apiUrl}/api/bookings/request`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          teacherId: tutorId,
+          availabilityId: selectedSlot.id,
+          lessonFee: tutor.base_hourly_rate
+        })
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setBookingStatus('SUCCESS');
+      } else {
+        setError(data.message || 'Booking failed');
+        setBookingStatus('IDLE');
+      }
+    } catch (err: any) {
+      setError(err.message || 'Network error');
+      setBookingStatus('IDLE');
+    }
   };
 
   if (loading) {
@@ -62,7 +96,7 @@ export default function BookingPage() {
     return (
       <div className="container mx-auto px-4 py-16 text-center">
         <h1 className="text-2xl font-bold mb-4">Tutor Not Found</h1>
-        <p className="text-muted-foreground">The tutor you are looking for does not exist or is unavailable.</p>
+        <p className="text-muted-foreground">The tutor you are looking for does not exist.</p>
       </div>
     );
   }
@@ -102,8 +136,10 @@ export default function BookingPage() {
             <CheckCircle className="h-20 w-20 text-green-500 mb-6" />
             <h2 className="text-3xl font-bold mb-2">Booking Confirmed!</h2>
             <p className="text-muted-foreground mb-8 text-lg">
-              Your 1-hour lesson with {tutor.first_name} is successfully scheduled for <br/> 
-              <span className="font-semibold text-foreground">{selectedSlot}</span>.
+              Your funds have been securely held. Your lesson is scheduled for:<br/> 
+              <span className="font-semibold text-foreground">
+                {new Date(selectedSlot.start_time).toLocaleString()}
+              </span>.
             </p>
             <Button onClick={() => window.location.href = '/dashboard'} className="px-8">
               Go to Dashboard
@@ -117,27 +153,45 @@ export default function BookingPage() {
               <h2 className="text-xl font-bold mb-6 flex items-center gap-2">
                 <Calendar className="h-5 w-5" /> Select an available 1-hour slot
               </h2>
-              <div className="space-y-3">
-                {MOCK_SLOTS.map((slot) => (
-                  <button
-                    key={slot}
-                    onClick={() => setSelectedSlot(slot)}
-                    className={`w-full text-left p-4 rounded-lg border transition-all ${
-                      selectedSlot === slot 
-                      ? 'border-primary bg-blue-50 ring-2 ring-primary ring-opacity-20' 
-                      : 'hover:border-primary hover:bg-gray-50'
-                    }`}
-                  >
-                    <div className="font-medium">{slot}</div>
-                  </button>
-                ))}
-              </div>
+              {availabilities.length === 0 ? (
+                <div className="p-4 border border-dashed rounded-lg text-center text-muted-foreground">
+                  No available slots right now. Check back later!
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {availabilities.map((slot) => {
+                    const date = new Date(slot.start_time).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
+                    const time = new Date(slot.start_time).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+                    const label = `${date} at ${time}`;
+
+                    return (
+                      <button
+                        key={slot.id}
+                        onClick={() => setSelectedSlot(slot)}
+                        className={`w-full text-left p-4 rounded-lg border transition-all ${
+                          selectedSlot?.id === slot.id 
+                          ? 'border-primary bg-blue-50 ring-2 ring-primary ring-opacity-20' 
+                          : 'hover:border-primary hover:bg-gray-50'
+                        }`}
+                      >
+                        <div className="font-medium">{label}</div>
+                      </button>
+                    )
+                  })}
+                </div>
+              )}
             </div>
 
             {/* Checkout / Confirmation */}
             <div className="bg-gray-50 p-6 rounded-xl border h-fit sticky top-6">
               <h3 className="text-lg font-bold mb-4">Lesson Summary</h3>
               
+              {error && (
+                <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-600 rounded-md text-sm">
+                  {error}
+                </div>
+              )}
+
               <div className="space-y-3 mb-6">
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Tutor</span>
@@ -145,7 +199,11 @@ export default function BookingPage() {
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Time Slot</span>
-                  <span className="font-medium text-right">{selectedSlot || 'Please select a slot'}</span>
+                  <span className="font-medium text-right">
+                    {selectedSlot 
+                      ? new Date(selectedSlot.start_time).toLocaleString(undefined, { weekday: 'short', hour: '2-digit', minute: '2-digit' }) 
+                      : 'Please select a slot'}
+                  </span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Duration</span>

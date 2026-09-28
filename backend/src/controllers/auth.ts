@@ -46,9 +46,9 @@ export const register = async (req: Request, res: Response) => {
       );
     }
 
-    // 4. Create an empty wallet for the user
+    // 4. Create an empty wallet for the user (with 5000 PKR prototype bonus)
     await client.query(
-      `INSERT INTO wallets (user_id, balance, held_balance) VALUES ($1, 0, 0)`,
+      `INSERT INTO wallets (user_id, balance, held_balance) VALUES ($1, 5000, 0)`,
       [userId]
     );
 
